@@ -3,10 +3,11 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use warp::body::json;
 use warp::{http, Filter};
+use serde::Deserialize;
 
 type Students = HashMap<String, String>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Student {
     id: String,
     name: String,
@@ -49,7 +50,6 @@ async fn add_student_to_list(
     store: Store,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     store.student_list.write().await.insert(student.id, student.name);
-
     Ok(warp::reply::with_status(
         "Added student to the list",
         http::StatusCode::CREATED,
