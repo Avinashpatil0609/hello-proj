@@ -3,7 +3,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use warp::body::json;
+use warp::http::StatusCode;
 use warp::{http, Filter};
+use warp::reply::Json;
 
 type Students = HashMap<String, String>;
 
@@ -41,6 +43,7 @@ async fn main() {
         .and_then(add_student_to_list);
     let get_student = warp::get()
         .and(warp::path("student"))
+        .and(warp::path::param())
         .and(warp::path::end())
         .and(store_filter.clone())
         .and_then(get_students_from_list);
@@ -65,14 +68,22 @@ async fn add_student_to_list(
     ))
 }
 
-async fn get_students_from_list(store: Store) -> Result<impl warp::Reply, warp::Rejection> {
+async fn get_students_from_list(
+    id: String,
+    store: Store,
+) -> Result<impl warp::Reply, warp::Rejection> {
     let mut result = HashMap::new();
 
     let r = store.student_list.read().await;
 
     for (key, value) in r.iter() {
-        result.insert(key, value);
+        if key == &id {
+            result.insert(key, value);
+           return Ok(warp::reply::json(&result));
+        }
     }
-
-    Ok(warp::reply::json(&result))
+    Ok(warp::reply::with_status(
+        Default::default(),
+        StatusCode::NOT_FOUND,
+    ))
 }
