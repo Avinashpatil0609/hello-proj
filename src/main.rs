@@ -4,8 +4,8 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use warp::body::json;
 use warp::http::StatusCode;
-use warp::{http, Filter};
 use warp::reply::Json;
+use warp::{http, Filter};
 
 type Students = HashMap<String, String>;
 
@@ -79,7 +79,7 @@ async fn get_students_from_list(
     for (key, value) in r.iter() {
         if key == &id {
             result.insert(key, value);
-           return Ok(warp::reply::json(&result));
+            return Ok(warp::reply::json(&result));
         }
     }
     Ok(warp::reply::with_status(
