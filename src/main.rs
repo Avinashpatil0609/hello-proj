@@ -46,7 +46,7 @@ async fn main() {
         .and(warp::path::param())
         .and(warp::path::end())
         .and(store_filter.clone())
-        .and_then(get_students_from_list);
+        .and_then(get_student_from_list);
 
     let routes = hello.or(add_student).or(get_student);
 
@@ -68,7 +68,7 @@ async fn add_student_to_list(
     ))
 }
 
-async fn get_students_from_list(
+async fn get_student_from_list(
     id: String,
     store: Store,
 ) -> Result<impl warp::Reply, warp::Rejection> {
