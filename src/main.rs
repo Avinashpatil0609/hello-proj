@@ -5,9 +5,10 @@ use tokio::sync::RwLock;
 use warp::body::json;
 use warp::http::StatusCode;
 use warp::reply::Json;
-use warp::{http, Filter};
+use warp::{http, Filter, Reply};
 
-type Students = HashMap<String, String>;
+// type Students = HashMap<String, String>;
+// let Stud: Vec<String> = Vec::new();
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Student {
@@ -17,13 +18,13 @@ pub struct Student {
 
 #[derive(Clone)]
 struct Store {
-    student_list: Arc<RwLock<Students>>,
+    student_list: Arc<RwLock<Vec<Student>>>,
 }
 
 impl Store {
     fn new() -> Self {
         Store {
-            student_list: Arc::new(RwLock::new(HashMap::new())),
+            student_list: Arc::new(RwLock::new(Vec::new())),
         }
     }
 }
@@ -61,7 +62,7 @@ async fn add_student_to_list(
         .student_list
         .write()
         .await
-        .insert(student.id, student.name);
+        .insert(student.id.parse().unwrap(), student);
     Ok(warp::reply::with_status(
         "Added student to the list",
         http::StatusCode::CREATED,
@@ -71,19 +72,28 @@ async fn add_student_to_list(
 async fn get_student_from_list(
     id: String,
     store: Store,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    let mut result = HashMap::new();
+) -> Result<impl warp::reply::Reply, warp::Rejection> {
+    // let mut result = HashMap::new();
 
     let r = store.student_list.read().await;
+    // let student = r.get(&id);
+    let maybe_student = r.iter().find(|&(key,value)|key.eq(&id)).map(|kv|kv.clone());
 
-    for (key, value) in r.iter() {
-        if key == &id {
-            result.insert(key, value);
-            return Ok(warp::reply::json(&result));
-        }
+    match maybe_student{
+        Some(student) => Ok(warp::reply::json(&student).into_response()),
+        None => Ok(StatusCode::NOT_FOUND.into_response())
     }
-    Ok(warp::reply::with_status(
-        Default::default(),
-        StatusCode::NOT_FOUND,
-    ))
+
+
+
+    // for (key, value) in r.iter() {
+    //     if key == &id {
+    //         result.insert(key, value);
+    //         return Ok(warp::reply::json(&result));
+    //     }
+    // }
+    // Ok(warp::reply::with_status(
+    //     Default::default(),
+    //     StatusCode::NOT_FOUND,
+    // ))
 }
